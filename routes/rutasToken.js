@@ -86,4 +86,20 @@ router.put('/direccion', [], (req, res) => {
     }))
 });
 
+router.get('/producto-id-nombre/:busqueda', [
+    param('busqueda').not().isEmpty().isString(),
+], (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        res.json({ success: false, err: JSON.stringify(errors) })
+        return
+    }
+    let busqueda = req.params.busqueda;
+    user.getProductoIdPorNombre(connection, busqueda, (data => {
+        user.getGlobal(connection, '@busquedaProducto', (data2 => {
+            res.json(data2);
+        }))
+    }))
+});
+
 module.exports = router;

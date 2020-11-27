@@ -110,6 +110,26 @@ module.exports = {
         })
     },
 
+    getProductoIdPorNombre: (connection, busqueda, callback) => {
+        connection.query(`call buscarP('${busqueda}')`, (err, results) => {
+            if (err) {
+                callback({ array: null, id: null, success: false, err: JSON.stringify(err) });
+                return;
+            }
+            callback({ array: results, id: null, success: true });
+        })
+    },
+
+    getGlobal: (connection, varGlob, callback) => {
+        connection.query(`select ${varGlob} as id`, (err, results) => {
+            if (err) {
+                callback({ array: null, id: null, success: false, err: JSON.stringify(err) });
+                return;
+            }
+            callback({ array: results, id: null, success: true });
+        })
+    },
+
     getTipoProducto: (connection, tipo, callback) => {
         connection.query('select * from producto where tipo = ' + tipo, (err, results) => {
             if (err) {
@@ -161,7 +181,7 @@ module.exports = {
     },
 
     updateRol: (connection, body, callback) => {
-        connection.query('update usuario set rol = lower(?) WHERE correo = ? ', [body.rol, body.correo], (err, results) => {
+        connection.query('update v_usuario_rol set rol = lower(?) WHERE correo = ? ', [body.rol, body.correo], (err, results) => {
             if (err) {
                 callback({ array: null, id: null, success: false, err: JSON.stringify(err) });
                 return;
@@ -171,7 +191,7 @@ module.exports = {
     },
 
     getRolesUsuarios: (connection, id, callback) => {
-        connection.query('select correo, upper(rol) as rol from usuario where id <> ' + id, (err, results) => {
+        connection.query('select correo, upper(rol) as rol from v_usuario_rol where id <> ' + id, (err, results) => {
             if (err) {
                 callback({ array: null, id: null, success: false, err: JSON.stringify(err) });
                 return;

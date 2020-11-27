@@ -185,15 +185,14 @@ router.post('/producto-compra', (req, res) => {
     }));
 });
 
-router.put('/compra', [], (req, res) => {
-    let body = req.body;
-    user.updateExistencia(connection, body, (data => {
+router.get('/compras', (req, res) => {
+    user.getCompras(connection, (data => {
         res.json(data);
     }))
 });
 
-router.get('/compras', (req, res) => {
-    user.getCompras(connection, (data => {
+router.get('/ventas', (req, res) => {
+    user.getVentas(connection, (data => {
         res.json(data);
     }))
 });
@@ -213,6 +212,21 @@ router.get('/compras-por-fecha/:f1/:f2', [
     }))
 });
 
+router.get('/ventas-por-fecha/:f1/:f2', [
+    param('f1').not().isEmpty().isString(),
+    param('f2').not().isEmpty().isString(),
+], (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        res.json({ success: false, err: JSON.stringify(errors) })
+        return
+    }
+    let params = req.params;
+    user.getVentasPorFechas(connection, params, (data => {
+        res.json(data);
+    }))
+});
+
 router.get('/producto-compra/:id_compra', [
     param('id_compra').not().isEmpty().isString(),
 ], (req, res) => {
@@ -223,6 +237,20 @@ router.get('/producto-compra/:id_compra', [
     }
     let id_compra = req.params.id_compra;
     user.getProductoCompras(connection, id_compra, (data => {
+        res.json(data);
+    }))
+});
+
+router.get('/producto-venta/:id_venta', [
+    param('id_venta').not().isEmpty().isString(),
+], (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        res.json({ success: false, err: JSON.stringify(errors) })
+        return
+    }
+    let id_venta = req.params.id_venta;
+    user.getProductoVentas(connection, id_venta, (data => {
         res.json(data);
     }))
 });
@@ -238,6 +266,75 @@ router.get('/reporte-compras1/:mes/:anio', [
     }
     let params = req.params;
     user.getComprasProveedorPorMes(connection, params, (data => {
+        res.json(data);
+    }))
+});
+
+router.get('/reporte-compras2/:anio', [
+    param('anio').not().isEmpty().isString(),
+], (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        res.json({ success: false, err: JSON.stringify(errors) })
+        return
+    }
+    let anio = req.params.anio;
+    user.getComprasPromedioTotalAnual(connection, anio, (data => {
+        res.json(data);
+    }))
+});
+
+router.get('/reporte-compras3/:id_proveedor', [
+    param('id_proveedor').not().isEmpty().isString(),
+], (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        res.json({ success: false, err: JSON.stringify(errors) })
+        return
+    }
+    let id_proveedor = req.params.id_proveedor;
+    user.getComprasProductosPorTipoProveedor(connection, id_proveedor, (data => {
+        res.json(data);
+    }))
+});
+
+router.get('/reporte-compras41', (req, res) => {
+    user.getProductosGroupByMaterial(connection, (data => {
+        res.json(data);
+    }))
+});
+
+router.get('/reporte-compras42', (req, res) => {
+    user.getProductosGroupByTipo(connection, (data => {
+        res.json(data);
+    }))
+});
+
+router.get('/reporte-compras5/:f1/:f2', [
+    param('f1').not().isEmpty().isString(),
+    param('f2').not().isEmpty().isString(),
+], (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        res.json({ success: false, err: JSON.stringify(errors) })
+        return
+    }
+    let params = req.params;
+    user.getProductosMasComprados(connection, params, (data => {
+        res.json(data);
+    }))
+});
+
+router.get('/reporte-compras6/:id_producto', [
+    param('id_producto').not().isEmpty().isString(),
+], (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        res.json({ success: false, err: JSON.stringify(errors) })
+        return
+    }
+    let id_producto = req.params.id_producto;
+    user.getComprasProveedorPorProducto(connection, id_producto, (data => {
         res.json(data);
     }))
 });

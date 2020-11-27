@@ -141,7 +141,8 @@ module.exports = {
     },
 
     deleteProveedorProducto: (connection, id, callback) => {
-        connection.query(`delete from proveedor_producto where id = '${id}'`, (err, results) => {
+        // connection.query(`delete from proveedor_producto where id = '${id}'`, (err, results) => {
+        connection.query(`call eliminarProvProd(${id})`, (err, results) => {
             if (err) {
                 callback({ array: null, id: null, success: false, err: JSON.stringify(err) });
                 return;
@@ -170,18 +171,18 @@ module.exports = {
         });
     },
 
-    updateExistencia: (connection, body, callback) => {
-        connection.query('update producto set existencia = existencia + ? where id = ?', [body.cantidad, body.id_producto], (err, results) => {
+    getCompras: (connection, callback) => {
+        connection.query(`select c.id, p.nombre as proveedor, c.fecha, c.total from compras c, proveedor p where c.id_proveedor = p.id order by c.fecha desc limit 20`, (err, results) => {
             if (err) {
                 callback({ array: null, id: null, success: false, err: JSON.stringify(err) });
                 return;
             }
-            callback({ array: null, id: null, success: true });
-        });
+            callback({ array: results, id: null, success: true });
+        })
     },
 
-    getCompras: (connection, callback) => {
-        connection.query(`select c.id, p.nombre as proveedor, c.fecha, c.total from compras c, proveedor p where c.id_proveedor = p.id limit 20`, (err, results) => {
+    getVentas: (connection, callback) => {
+        connection.query(`select v.id, u.correo as cliente, v.fecha, v.total, v.num_tarjeta from ventas v, usuario u where v.id_usuario = u.id order by v.fecha desc limit 20`, (err, results) => {
             if (err) {
                 callback({ array: null, id: null, success: false, err: JSON.stringify(err) });
                 return;
@@ -200,6 +201,16 @@ module.exports = {
         })
     },
 
+    getVentasPorFechas: (connection, params, callback) => {
+        connection.query(`select v.id, u.correo as cliente, v.fecha, v.total, v.num_tarjeta from ventas v, usuario u where v.id_usuario = u.id and v.fecha between '${params.f1}' and '${params.f2}' limit 20`, (err, results) => {
+            if (err) {
+                callback({ array: null, id: null, success: false, err: JSON.stringify(err) });
+                return;
+            }
+            callback({ array: results, id: null, success: true });
+        })
+    },
+
     getProductoCompras: (connection, id_compra, callback) => {
         connection.query(`select p.nombre, p.imagen, c.cantidad, c.precio, c.precio*c.cantidad as total from producto p, producto_compras c where c.id_producto=p.id and c.id_compra = ${id_compra}`, (err, results) => {
             if (err) {
@@ -210,8 +221,78 @@ module.exports = {
         })
     },
 
+    getProductoVentas: (connection, id_compra, callback) => {
+        connection.query(`select p.nombre, p.imagen, v.cantidad, v.precio, v.precio*v.cantidad as total from producto p, producto_ventas v where v.id_producto=p.id and v.id_ventas = ${id_compra}`, (err, results) => {
+            if (err) {
+                callback({ array: null, id: null, success: false, err: JSON.stringify(err) });
+                return;
+            }
+            callback({ array: results, id: null, success: true });
+        })
+    },
+
     getComprasProveedorPorMes: (connection, params, callback) => {
         connection.query(`select p.nombre as proveedor, count(c.id_proveedor) as no_compras from proveedor p, compras c where p.id=c.id_proveedor and month(c.fecha) = ${params.mes} and year(c.fecha)=${params.anio} group by p.id`, (err, results) => {
+            if (err) {
+                callback({ array: null, id: null, success: false, err: JSON.stringify(err) });
+                return;
+            }
+            callback({ array: results, id: null, success: true });
+        })
+    },
+
+    getComprasPromedioTotalAnual: (connection, anio, callback) => {
+        connection.query(`select month(fecha) as mes, avg(total) as promedio from compras where year(fecha)='${anio}' group by month(fecha)`, (err, results) => {
+            if (err) {
+                callback({ array: null, id: null, success: false, err: JSON.stringify(err) });
+                return;
+            }
+            callback({ array: results, id: null, success: true });
+        })
+    },
+
+    getComprasProductosPorTipoProveedor: (connection, id_proveedor, callback) => {
+        connection.query(`select a.tipo, sum(b.cantidad) as cantidad from producto a, producto_compras b, compras c where a.id=b.id_producto and b.id_compra=c.id and id_proveedor='${id_proveedor}' group by a.tipo`, (err, results) => {
+            if (err) {
+                callback({ array: null, id: null, success: false, err: JSON.stringify(err) });
+                return;
+            }
+            callback({ array: results, id: null, success: true });
+        })
+    },
+
+    getProductosGroupByTipo: (connection, callback) => {
+        connection.query(`select count(nombre) as cantidad, tipo from producto group by tipo;`, (err, results) => {
+            if (err) {
+                callback({ array: null, id: null, success: false, err: JSON.stringify(err) });
+                return;
+            }
+            callback({ array: results, id: null, success: true });
+        })
+    },
+
+    getProductosGroupByMaterial: (connection, callback) => {
+        connection.query(`select count(nombre) as cantidad, material from producto group by material`, (err, results) => {
+            if (err) {
+                callback({ array: null, id: null, success: false, err: JSON.stringify(err) });
+                return;
+            }
+            callback({ array: results, id: null, success: true });
+        })
+    },
+
+    getProductosMasComprados: (connection, params, callback) => {
+        connection.query(`select a.nombre, sum(b.cantidad) as cantidad from producto a, producto_compras b, compras c where a.id=b.id_producto and b.id_compra=c.id and c.fecha between '${params.f1}' and '${params.f2}' group by a.nombre order by sum(b.cantidad) desc limit 10`, (err, results) => {
+            if (err) {
+                callback({ array: null, id: null, success: false, err: JSON.stringify(err) });
+                return;
+            }
+            callback({ array: results, id: null, success: true });
+        })
+    },
+
+    getComprasProveedorPorProducto: (connection, id_producto, callback) => {
+        connection.query(`select sum(b.cantidad) as cantidad, b.precio, d.nombre as proveedor, sum(b.cantidad) * b.precio as total from producto a, producto_compras b, proveedor d, compras e where a.id=b.id_producto and b.id_compra=e.id and e.id_proveedor=d.id and a.id='${id_producto}' group by e.id_proveedor`, (err, results) => {
             if (err) {
                 callback({ array: null, id: null, success: false, err: JSON.stringify(err) });
                 return;
