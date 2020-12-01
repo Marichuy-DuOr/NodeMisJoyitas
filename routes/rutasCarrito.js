@@ -108,10 +108,16 @@ router.get('/venta/:fecha', [
     }))
 });
 
-
-router.put('/producto', [], (req, res) => {
-    let body = req.body;
-    user.updateProdExistencia(connection, body, (data => {
+router.get('/ventas/:id', [
+    param('id').not().isEmpty().isString(),
+], (req, res) => {
+    const errors = validationResult(req);
+    let id = req.params.id;
+    if (!errors.isEmpty()) {
+        res.json({ success: false, err: JSON.stringify(errors) })
+        return
+    }
+    user.getVentaId(connection, id, (data => {
         res.json(data);
     }))
 });
@@ -119,6 +125,56 @@ router.put('/producto', [], (req, res) => {
 router.post('/productoVenta', [], (req, res) => {
     let body = req.body;
     user.createProducto_Venta(connection, body, (data => {
+        res.json(data);
+    }))
+});
+
+router.get('/ventas', [], (req, res) => {
+    let id = req.idUsuario;
+    user.getAllVenta(connection, id, (data => {
+        res.json(data);
+    }))
+});
+
+router.get('/reporte-ventas1/:date1/:date2', [
+    param('date1').not().isEmpty().isString(),
+    param('date2').not().isEmpty().isString(),
+], (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        res.json({ success: false, err: JSON.stringify(errors) })
+        return
+    }
+    let params = req.params;
+    user.getProdMasVendidos(connection, params, (data => {
+        res.json(data);
+    }))
+});
+
+router.get('/reporte-ventas2/:anio', [
+    param('anio').not().isEmpty().isString(),
+], (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        res.json({ success: false, err: JSON.stringify(errors) })
+        return
+    }
+    let params = req.params;
+    user.getGananciasAnual(connection, params, (data => {
+        res.json(data);
+    }))
+});
+
+router.get('/reporte-ventas3', [], (req, res) => {
+    
+    user.getGananciaDia(connection, (data => {
+        res.json(data);
+    }))
+});
+
+router.get('/reporte-ventas4', [], (req, res) => {
+    
+    user.getUserMasCompra(connection, (data => {
         res.json(data);
     }))
 });

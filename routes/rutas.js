@@ -75,4 +75,18 @@ router.get('/municipio/:busqueda', [
     }))
 });
 
+router.get('/ventas/:id_ventas', [
+    param('id_ventas').not().isEmpty().isString(),
+], (req, res) => {
+    const errors = validationResult(req);
+    let id_ventas = req.params.id_ventas;
+    if (!errors.isEmpty()) {
+        res.json({ success: false, err: JSON.stringify(errors) })
+        return
+    }
+    user.getVentaId(connection, id_ventas, (data => {
+        res.json(data);
+    }))
+});
+
 module.exports = router;

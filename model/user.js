@@ -71,7 +71,7 @@ module.exports = {
     },
 
     getAllProductos: (connection, callback) => {
-        connection.query('select * from producto where is_active = 1', (err, results) => {
+        connection.query('select * from v_producto', (err, results) => {
             if (err) {
                 callback({ array: null, id: null, success: false, err: JSON.stringify(err) });
                 return;
@@ -131,7 +131,7 @@ module.exports = {
     },
 
     getTipoProducto: (connection, tipo, callback) => {
-        connection.query('select * from producto where tipo = ' + tipo, (err, results) => {
+        connection.query(`select * from producto where tipo = ${tipo} and is_active = 1`, (err, results) => {
             if (err) {
                 callback({ array: null, id: null, success: false, err: JSON.stringify(err) });
                 return;
@@ -251,7 +251,7 @@ module.exports = {
     },
 
     deleteProdCarrito: (connection, body, callback) => {
-        connection.query(`delete from carrito where id_usuario = '${body.id_usuario}' and id_producto = '${body.id}' and cantidad = '${body.cantidad}'`, (err, results) => {
+        connection.query(`call eliminarProdCarrito(${body.id_usuario},${body.id},${body.cantidad})`, (err, results) => {
             if (err) {
                 callback({ array: null, id: null, success: false, err: JSON.stringify(err) });
                 return;
@@ -290,16 +290,6 @@ module.exports = {
         })
     },
 
-    updateProdExistencia: (connection, body, callback) => {
-        connection.query('update producto set existencia = existencia - ? WHERE id = ? ', [body.cantidad, body.id_producto], (err, results) => {
-            if (err) {
-                callback({ array: null, id: null, success: false, err: JSON.stringify(err) });
-                return;
-            }
-            callback({ array: null, id: null, success: true });
-        });
-    },
-
     createProducto_Venta: (connection, body, callback) => {
         connection.query('insert into producto_ventas SET ?', body, (err, results) => {
             if (err) {
@@ -309,5 +299,67 @@ module.exports = {
             callback({ array: results, id: null, success: true });
         });
     },
+
+    getVentaId: (connection, id_ventas, callback) => {
+        connection.query('select * from producto_ventas where id_ventas = ' + id_ventas, (err, results) => {
+            if (err) {
+                callback({ array: null, id: null, success: false, err: JSON.stringify(err) });
+                return;
+            }
+            callback({ array: results, id: null  || null, success: true });
+        })
+    },
+
+
+    getAllVenta: (connection, id, callback) => {
+        connection.query('select * from ventas where factura = 0 and id_usuario = ?', [id], (err, results) => {
+            if (err) {
+                callback({ array: null, id: null, success: false, err: JSON.stringify(err) });
+                return;
+            }
+            callback({ array: results, id: null, success: true });
+        })
+    },
+
+    getProdMasVendidos: (connection, body, callback) => {
+        connection.query(`select a.nombre, sum(b.cantidad) as cantidad from producto a, producto_ventas b, ventas c where a.id=b.id_producto and b.id_ventas=c.id and c.fecha between '${body.date1}' and '${body.date2}' group by a.nombre order by sum(b.cantidad) desc limit 10`, (err, results) => {
+            if (err) {
+                callback({ array: null, id: null, success: false, err: JSON.stringify(err) });
+                return;
+            }
+            callback({ array: results, id: null, success: true });
+        })
+    },
+
+    getGananciasAnual: (connection, body, callback) => {
+        connection.query(`select month(v.fecha) as mes, sum((pv.precio*pv.cantidad)/2) as suma from ventas v, producto p, producto_compras pc, producto_ventas pv where p.id = pc.id_producto and p.id = pv.id_producto and v.id = pv.id_ventas and year(v.fecha)='${body.anio}' group by month(v.fecha)`, (err, results) => {
+            if (err) {
+                callback({ array: null, id: null, success: false, err: JSON.stringify(err) });
+                return;
+            }
+            callback({ array: results, id: null, success: true });
+        })
+    },
+
+    getGananciaDia: (connection, callback) => {
+        connection.query('select day(a.fecha) as dia, sum(b.cantidad) as total, sum((b.precio*b.cantidad)/2) as ganancia from ventas a, producto_ventas b where a.id=b.id_ventas and day(a.fecha)=day(curdate()) group by day(a.fecha)', (err, results) => {
+            if (err) {
+                callback({ array: null, id: null, success: false, err: JSON.stringify(err) });
+                return;
+            }
+            callback({ array: results, id: null, success: true });
+        })
+    },
+
+    getUserMasCompra: (connection, callback) => {
+        connection.query('select u.id as id, concat(u.nombre," ",u.ape_pat," ",u.ape_mat) as nombre, sum(pv.cantidad) as suma from usuario u, ventas v, producto_ventas pv where u.id = v.id_usuario and v.id = pv.id_ventas group by u.id order by suma desc limit 10', (err, results) => {
+            if (err) {
+                callback({ array: null, id: null, success: false, err: JSON.stringify(err) });
+                return;
+            }
+            callback({ array: results, id: null, success: true });
+        })
+    },
+    
 
 }
