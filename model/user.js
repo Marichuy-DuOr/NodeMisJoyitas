@@ -360,6 +360,17 @@ module.exports = {
             callback({ array: results, id: null, success: true });
         })
     },
+
+    getfacturas: (connection, callback) => {
+        connection.query('call factura()', (err, results) => {
+            if (err) {
+                callback({ array: null, id: null, success: false, err: JSON.stringify(err) });
+                return;
+            }
+            callback({ array: results, id: null, success: true });
+        })
+    },
+    
     
 
 }

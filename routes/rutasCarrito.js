@@ -179,4 +179,11 @@ router.get('/reporte-ventas4', [], (req, res) => {
     }))
 });
 
+router.get('/facturas', [], (req, res) => {
+    
+    user.getfacturas(connection, (data => {
+        res.json(data);
+    }))
+});
+
 module.exports = router;
